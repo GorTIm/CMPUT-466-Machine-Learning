@@ -43,6 +43,8 @@ if __name__ == '__main__':
     #Use bracket to transform Y as 2d array
     Y=dataset.iloc[:,[-1]].values
     
+    Y=np.asarray([1 if x[0]<-0.5 else 0 for x in Y])
+    
     
     """
     X.max(axis=0)
@@ -51,14 +53,14 @@ if __name__ == '__main__':
     """
     
     
-
+    """#Taking care of missing value
     
+    """
     
     """ Another possible way to fill missing value:
         dataset.fillna(dataset.mean())
     """
     if not dataset.isnull().values.any():
-        #Taking care of missing value
         from sklearn.impute import SimpleImputer
         imputer=SimpleImputer(missing_values=np.nan, strategy='mean' )
         imputer=imputer.fit(X[:,:])
@@ -89,12 +91,12 @@ if __name__ == '__main__':
     X_train,X_test,y_train,y_test=train_test_split(X,Y,test_size=0.2,random_state=0)
     
  
-    """
+    
     #feature scaling with Standardization
     x_sc=StandardScaler()
     X_train=x_sc.fit_transform(X_train)
     X_test=x_sc.transform(X_test)
-    
+    """
     #Rescaling on Y is not necessary for classification problem
     y_sc=StandardScaler()
     y_train=y_sc.fit_transform(y_train)
@@ -114,7 +116,7 @@ if __name__ == '__main__':
   
     """
     
- 
+    
    
     """    
     #feature scaling with Robust scaler
@@ -128,15 +130,37 @@ if __name__ == '__main__':
     y_test=y_rb.transform(y_test)
     """
     
+    state = np.random.RandomState(42)
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.svm import SVC
+    from sklearn.naive_bayes import GaussianNB
+    models={"logistic":LogisticRegression(random_state=0),
+            "naive_bayes":GaussianNB(),
+            "SVM":SVC(kernel='linear')
+            }
+    """
+    "SVM":OneClassSVM(kernel='rbf', degree=3, gamma=0.1,nu=0.05, 
+                                         max_iter=-1, random_state=state)
+    """
     
-    from sklearn.linear_model import Ridge
-    regressor = Ridge()
-    regressor.fit(X_train, y_train)
-    
-    y_pred = regressor.predict(X_test)
-    
-   
-    
+    from sklearn.metrics import confusion_matrix,accuracy_score,classification_report
+    for name,model in models.items():
+        
+        classifier = model
+        classifier.fit(X_train, y_train)
+        
+        y_pred = classifier.predict(X_test)
+        
+        
+        cm=confusion_matrix(y_test,y_pred)
+        n_errors = (y_pred != y_test).sum()
+        # Run Classification Metrics
+        print("Model {}: {}".format(name,n_errors))
+        print("Accuracy Score :")
+        print(accuracy_score(y_test,y_pred))
+        print("Classification Report :")
+        print(classification_report(y_test,y_pred))
+
     
     """
     regressor.score(X_train, y_train)
